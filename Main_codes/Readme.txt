@@ -1,6 +1,7 @@
 These are implementations of the hierarchies from the paper that run faster than the implementations in Yalmip only. They also require Yalmip and solvers, but in addition they require two more packages:
+
 (1) SOSTOOLS package to create polynomial objects: A. Papachristodoulou, J. Anderson, G. Valmorbida, S. Prajna, P. Seiler, P. A. Parrilo, M. M. Peet and D. Jagt, 
-SOSTOOLS: Sum of squares optimization toolbox for MATLAB, http://arxiv.org/abs/1310.4716, 2021, 
-available from https://github.com/oxfordcontrol/SOSTOOLS.
+SOSTOOLS: Sum of squares optimization toolbox for MATLAB, http://arxiv.org/abs/1310.4716, 2021, available from https://github.com/oxfordcontrol/SOSTOOLS.
+
 (2) Multinomial function to compute multinomial coefficients: Mukhtar Ullah (2023). MULTINOMIAL,
 available from https://www.mathworks.com/matlabcentral/fileexchange/6156-multinomial, MATLAB Central File Exchange.
