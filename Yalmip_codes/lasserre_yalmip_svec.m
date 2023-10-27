@@ -4,9 +4,9 @@ clear
 % Write here your case following the format of the below example
 numVars=5;
 x = sdpvar(numVars,1);
-f = sum(x(1:numVars-1).^2)/(numVars-1) + x(end)^2;
-g = [x(end)^2 - 1; sum(x(1:numVars-1).^2)-sum(x(1:numVars-1))*x(end)-(numVars-1);x];
-h=[]; 
+f = sum(x(1:numVars-1).^2)/(numVars-1) + x(end)^2; % objective function
+g = [x(end)^2 - 1; sum(x(1:numVars-1).^2)-sum(x(1:numVars-1))*x(end)-(numVars-1)]; % vector of inequality constraints, >=0 format
+h=[]; % vector of equality constraints
 %
 
 % Begin the certificate
