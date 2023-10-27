@@ -32,7 +32,7 @@ lenG = length(g);
 % lambda-variable
 sdpvar lambda
 
-% Add the coefficient-wise equality, so Denominator(f-lambda) - certificate = 0, start with Denominator(f-lambda)
+% Add the coefficient-wise equality, so Denominator(f-lambda) - certificate = 0, start with f-lambda
 sum_poly = f - lambda;
 
 % Generate possible vectors of degrees for Schmudgen terms
