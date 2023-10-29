@@ -1,1 +1,1 @@
-These are implementations of the hierarchies from the paper in Yalmip. Schmudgen-based certificates are slower when using Yalmip only but can be implemented without any additional packages, except Yalmip and the solvers. 
+These are implementations of the hierarchies from the paper in Yalmip. Schmudgen-based certificates are slower when using Yalmip only but can be implemented without any outside packages while the faster codes require SOSTOOLS. 
