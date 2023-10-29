@@ -34,7 +34,8 @@ D = 0;
 denom = 1+sum(x);
 for i=1:size(beta,1)
     deg_temp = beta(i,:);
-    D = D + multinomial(r,[r-sum(deg_temp*dpoly),deg_temp*dpoly])*denom^(r-deg_temp*Dg)*prod(g.^(deg_temp'));
+    multinom_coef = factorial(r)/prod(factorial([r-sum(beta*dmax),beta*dmax]));
+    D = D + multinom_coef*denom^(r-beta*Dg)*prod(g.^(beta')); 
 end
 
 % lambda-variable
@@ -201,9 +202,10 @@ else
     opt.gurobi.TimeLimit = 1800;
 end
 
-Yout = optimize(F,obj,opt);
+Yout = optimize(F,obj,opt)
 
 lower_bound = double(lambda)
+construct_time
 sol_time = Yout.solvertime
 yalmip_time = Yout.yalmiptime
 status = Yout.problem

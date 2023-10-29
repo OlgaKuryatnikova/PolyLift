@@ -8,7 +8,7 @@ x = sdpvar(numVars,1);
 f = sum(x(1:numVars-1).^2)/(numVars-1) + x(end)^2; % objective function
 g = [x(end)^2 - 1; sum(x(1:numVars-1).^2)-sum(x(1:numVars-1))*x(end)-(numVars-1)]; % vector of inequality constraints, >=0 format, WITHOUT upper and lower bounds
 L = zeros(numVars,1); % lower bounds
-U = 10*ones(numVars,1); % upper bounds
+U = (numVars-1)*ones(numVars,1); % upper bounds
 h=[]; % vector of equality constraints
 dmax = 4; % maximal degreee of the hierarchy
 setType = 2; % type of coefficients: constant term (0), dsos (1), sos (2)
@@ -181,9 +181,10 @@ else
     opt.gurobi.TimeLimit = 1800;
 end
 
-Yout = optimize(F,obj,opt);
+Yout = optimize(F,obj,opt)
 
 lower_bound = double(lambda)
+construct_time
 sol_time = Yout.solvertime
 yalmip_time = Yout.yalmiptime
 status = Yout.problem

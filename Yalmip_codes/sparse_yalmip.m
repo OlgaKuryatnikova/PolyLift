@@ -2,39 +2,37 @@
 % the paper presents the version on a simplex only
 clear
 
-% Write here your case following the format of the below example
-numVars=5;
+%% Write here your case following the format of the below example
+numVars=3;
 x = sdpvar(numVars,1);
 f = sum(x(1:numVars-1).^2)/(numVars-1) + x(end)^2; % objective function
 g = [x(end)^2 - 1; sum(x(1:numVars-1).^2)-sum(x(1:numVars-1))*x(end)-(numVars-1)]; % vector of inequality constraints, >=0 format, WITHOUT upper and lower bounds
 L = zeros(numVars,1); % lower bounds
-U = 2*ones(numVars,1); % upper bounds
-M = 2*numVars; % simplex upper bound from the certificate in the paper
+U = (numVars-1)*ones(numVars,1); % upper bounds
+M = sum(U); % simplex upper bound from the certificate in the paper
 h=[]; % vector of equality constraints
-dmax = 4; % maximal degreee of the hierarchy
+dmax = 8; % maximal degreee of the hierarchy
 setType = 0; % 0 means simplex, just what is presented in the paper, 1 means box
-%
-
-degf = degree(f); % degree of the objective
-lenG = length(g);
-Dg = zeros(lenG,1);
-for j=1:lenG
-    Dg(j) = g(j).maxdeg;
-end
+n_vars_univ = 5; % starting from how many variables we start using univariate sos in the certificate
+%%
 
 %% Construct the certificate
 tic
+
+degf = degree(f); % degree of the objective
 lenG = length(g);
 Mhat = M;
 Ug = zeros(lenG,1);
 Dg = zeros(lenG,1);
 varsets = cell(lenG,1);
+vec_bounds = zeros(numVars,1); % ub (-1) or lb (1)
 
 for i=1:lenG
     Dg(i)=degree(g(i)); % max degree of g(i)
-    varsets{i} = find(degree(g(i),x))'; % variables of g(i)
-    numMonGi = g(i).nterms;
+    varsets{i} = find(degree(g(i),x)); % variables of g(i)
     [coefg,mong] = coefficients(g(i));
+    numMonGi = length(coefg);
+    
     dFull=[];
     for j=1:length(coefg)
         dFull = [dFull;[Dg(i)- degree(mong(j)),degree(mong(j),x)]]; 
@@ -116,8 +114,8 @@ sizeSDPsmall=cell(lenG,1);
 SOS=cell(lenG,1);
 
 for i=1:lenG
-    if length(varsets{i})>=3 %this is the original certificate
-        degs=(0:dsmall(i)/2)';
+    if length(varsets{i}) >= n_vars_univ % use univariate sos if we have more than n_vars_univ vars
+        degs=(0:dsmall(i))';
         monS=g(i).^degs;
         tmonS = transpose(monS);
     else
@@ -131,6 +129,19 @@ for i=1:lenG
     sum_poly = sum_poly - tmonS*SOS{i}*monS*g(i);
 end
 
+% equality constraints
+if ~isempty(h)
+    numeq = length(h);
+    Seq = cell(numeq,1);
+    sizeq = zeros(numeq,1);
+    for rr=1:numeq
+        moneq = monolist(x,dmax - degree(h(rr)));
+        sizeq(rr) = length(moneq);
+        Seq{rr} = sdpvar(1,sizeq(rr));
+        sum_poly = sum_poly - Seq{rr}*moneq*h(rr);
+    end
+end
+
 % total final constraint
 F = F + [coefficients(sum_poly,x) == 0];
 
@@ -142,13 +153,14 @@ construct_time=toc;
 %% Options and optimization
 opt=sdpsettings;
 opt.solver='mosek';
-opt.verbose=1;
+opt.verbose=0;
 opt.dualize=1;
 opt.mosek.MSK_DPAR_OPTIMIZER_MAX_TIME=1800;
-Yout = optimize(F,obj,opt);%
+Yout = optimize(F,obj,opt)
 
-
-lower_bound = double(lambda);
-sol_time = Yout.solvertime;
-yalmip_time = Yout.yalmiptime;
-status = Yout.problem;
+% Output the results
+lower_bound = double(lambda)
+construct_time
+sol_time = Yout.solvertime
+yalmip_time = Yout.yalmiptime
+status = Yout.problem
