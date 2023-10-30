@@ -1,0 +1,1 @@
+These are the versions of the Schmudgen non-SOS certificates with faster construction times (running times are approximately the same as in Yalmip). These codes use the functions from DIGS and SOSTOOLS version 1.00. 
