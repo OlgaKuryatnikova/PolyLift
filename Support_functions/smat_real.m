@@ -1,6 +1,7 @@
 function Y = smat_real(x,sz,Y)
 % Y = smat_real(x,sz,Y)
-% Placing the elements of the vector x in the symmetric real-valued matrix Y of the size sz x sz. 
+% Placing the elements of the vector x in the symmetric real-valued matrix Y of the size sz x sz 
+% using the adjoint of the standard svec operator. 
 % If Y is not given, it is set to be all-zero sparse.
 
 ind=triu(true(sz),1); % faster than "find"
