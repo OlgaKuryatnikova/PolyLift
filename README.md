@@ -2,7 +2,7 @@
 Matlab code for the project https://arxiv.org/abs/1909.06689. 
 
 **Examples:** examples used in the paper <br />
-**Yalmip_codes**: codes for all certificates from the paper;  Schmudgen-based certificates are somewhat slower in construction (not in solution) than Schmudgen_faster_codes. <br />
+**Yalmip_codes**: codes for all certificates used in the paper. <br />
 **Schmudgen_faster_codes:** codes for Schmudgen-based certificates with faster construction times (due to faster polynomial multplication). Schmudgen_faster_codes use some functions from SOSTOOLS version 1.00 and DIGS. <br />
 
 Besides the above codes, the certificates use Yalmip, Mosek (for SDP), Gurobi (for LP and SOCP).  
