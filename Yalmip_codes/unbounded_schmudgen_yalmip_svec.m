@@ -29,7 +29,7 @@ dmax = max(degree(h),r+2*dpoly+deg_aux);
 
 % denominator D for the unbounded certificate
 deg_D = floor(r/dpoly);
-beta =  indexCreationLess_sym(lenG,deg_D);
+beta =  indexCreationLess(lenG,deg_D);
 D = 0;
 denom = 1+sum(x);
 for i=1:size(beta,1)
@@ -53,7 +53,7 @@ Dg = [Dg;ones(numVars,1)];
 lenG = length(g);
 
 % Generate possible vectors of degrees for Schmudgen terms
-monVecG = indexCreationLess_sym(lenG,dmax);
+monVecG = indexCreationLess(lenG,dmax);
 indTotal = monVecG*Dg;
 % option 1
 indBelowDmax = indTotal <= dmax; % this option provides the same vector of degrees as in the paper (option 2), but it is simpler
