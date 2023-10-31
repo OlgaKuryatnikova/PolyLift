@@ -1,32 +1,67 @@
-% generalized Schmudgen certificate with coefficients in constants, dsos, sdsos or sos
-% the case of compact sets
-
+%% Schmudgen-based certificate with coefficients in constants, dsos, sdsos or sos
+%% The case of compact sets.
+%% Use Yalmip to encode polynomials.
 clear
-% Write here your case following the format of the below example
-numVars=3;
+
+%% Write here your case following the format of the below example
+numVars=5; % the number of variables in the problem
 x = sdpvar(numVars,1);
-f = sum(x(1:numVars-1).^2)/(numVars-1) + x(end)^2; % objective function
-g = [x(end)^2 - 1; sum(x(1:numVars-1).^2)-sum(x(1:numVars-1))*x(end)-(numVars-1)]; % vector of inequality constraints, >=0 format, WITHOUT upper and lower bounds
-L = zeros(numVars,1); % lower bounds
-U = (numVars-1)*ones(numVars,1); % upper bounds
-h=[]; % vector of equality constraints
+f = 7*(2*x(1)-x(2)+x(3)-2*x(4)-2*x(5)); % the objective function
+g = [(7*x(1)-2)^2-49*x(2)^2-(7*x(3)-1)^2-(7*x(5)-1)^2; 49*x(1)*x(3)-49*x(4)*x(5)+49*x(1)^2-1;7*x(3)-49*x(2)^2-49*x(4)^2-1;...
+    49*x(1)*x(5)-49*x(2)*x(3)-2;2-sum(x);x]; % vector of inequality constraints, >=0 format
+M = 2;
+L = zeros(numVars,1);
+U = M*ones(numVars,1);
+h = []; % vector of equality constraints, =0 format
 dmax = 4; % maximal degreee of the hierarchy
 setType = 2; % type of coefficients: constant term (0), dsos (1), sos (2)
 %
 
-% % Start the contruction
+%% Start the contruction
 tic
 
 lenG = length(g);
 Dg = zeros(lenG,1);
+vec_bounds = zeros(numVars,2); % lb (1 column) ub (2 column)
 for j=1:lenG
     Dg(j) = degree(g(j));
+    [coefg,mong] = coefficients(g(j));
+    numMonGj = length(coefg);
+    if numMonGj <=2 && Dg(j)==1
+        ind_bound = find(ismember(x,mong(end)));
+        if ~isempty(ind_bound)
+            if numMonGj == 1 && coefg(end) > 0 % ax >= 0
+                L(ind_bound) = 0;
+                vec_bounds(ind_bound,1) = 1;
+            elseif numMonGj == 1 && coefg(end) < 0 % -ax >= 0
+                U(ind_bound) = 0;
+                vec_bounds(ind_bound,2) = 1;
+            elseif numMonGj == 2 && coefg(end) > 0 % ax - L >= 0
+                L(ind_bound) = -coefg(1)/coefg(end);
+                vec_bounds(ind_bound,1) = 1;
+            else % numMong(j) == 2 && coefg(end) < 0: U - ax >= 0
+                U(ind_bound) = -coefg(1)/coefg(end);
+                vec_bounds(ind_bound,2) = 1;
+            end
+        end
+    end
 end
 Df = degree(f);
 
-% add additional terms for x
-g = [g;x-L;U-x];
-Dg = [Dg;ones(2*numVars,1)];
+
+% add bounds on x to the set description if they were not there initially, to use for the certificate
+for i=1:numVars
+    if sum(vec_bounds(i,:)) == 0 % if we have no bounds at all
+        g = [g;x(i)-L(i);U(i)-x(i)];
+        Dg = [Dg;1;1];
+    elseif vec_bounds(i,1) == 1 && vec_bounds(i,2) == 0 % we only have a lower bound
+        g = [g;U(i)-x(i)];
+        Dg = [Dg;1];
+    elseif vec_bounds(i,1) == 0 && vec_bounds(i,2) == 1 % we only have an upper bound
+        g = [g;x(i)-L(i)];
+        Dg = [Dg;1];
+    end
+end
 lenG = length(g);
 
 % lambda-variable
@@ -39,7 +74,7 @@ sum_poly = f - lambda;
 monVecG = indexCreationLess(lenG,dmax);
 indTotal = monVecG*Dg;
 % option 1
-indBelowDmax = indTotal <= dmax; 
+indBelowDmax = indTotal <= dmax;
 monVecG = monVecG(indBelowDmax,:);
 indTotal = indTotal(indBelowDmax);
 numMonG = sum(indBelowDmax);
@@ -138,7 +173,7 @@ for dd = 0:dcert
             % SOS constraint
             F=F+[mTemp >= 0];
         end
-
+        
     end
 end
 
@@ -170,10 +205,10 @@ opt.verbose = 0;
 opt.dualize = 0;
 if setType >= 2
     opt.solver='mosek';
-    opt.mosek.MSK_DPAR_INTPNT_CO_TOL_REL_GAP=1E-7;
-    opt.mosek.MSK_DPAR_INTPNT_CO_TOL_DFEAS=1E-7;
-    opt.mosek.MSK_DPAR_INTPNT_CO_TOL_PFEAS=1E-7;
-    opt.mosek.MSK_DPAR_PRESOLVE_TOL_X=1E-7;
+    %     opt.mosek.MSK_DPAR_INTPNT_CO_TOL_REL_GAP=1E-7;
+    %     opt.mosek.MSK_DPAR_INTPNT_CO_TOL_DFEAS=1E-7;
+    %     opt.mosek.MSK_DPAR_INTPNT_CO_TOL_PFEAS=1E-7;
+    %     opt.mosek.MSK_DPAR_PRESOLVE_TOL_X=1E-7;
     opt.mosek.MSK_DPAR_OPTIMIZER_MAX_TIME=1800;
 else
     opt.solver='gurobi';

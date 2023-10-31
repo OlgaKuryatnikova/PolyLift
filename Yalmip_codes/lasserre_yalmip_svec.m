@@ -1,36 +1,33 @@
-% The Lasserre hierarchy implemented in Yalmip, uses svec operator instead
-% of the full matrix, could be useful when the matrices become very large.
+%% The Lasserre hierarchy with svec operator instead of the full matrix.
+% The svec operator can be useful when the matrices become very large.
+%% Use Yalmip to encode polynomials.
 clear
 
 % Write here your case following the format of the below example
-numVars=5;
+numVars=5; % the number of variables in the problem
 x = sdpvar(numVars,1);
 f = sum(x(1:numVars-1).^2)/(numVars-1) + x(end)^2; % objective function
-g = [x(end)^2 - 1; sum(x(1:numVars-1).^2)-sum(x(1:numVars-1))*x(end)-(numVars-1)]; % vector of inequality constraints, >=0 format
+g = [x(end)^2 - 1; sum(x(1:numVars-1).^2)-sum(x(1:numVars-1))*x(end)-(numVars-1);x]; % vector of inequality constraints, >=0 format
 h=[]; % vector of equality constraints
-%
+dmax = 2; % the maximum degree of the relaxation
+%%
 
-% Begin the certificate
+%% Start the contruction
+tic
+
+% add the constant term to the non-negativity constraints
 g = [1;g];
 lenG = length(g);
 
-dmax = 4;
-
-% % Start the contruction
-tic
 % lambda-variable
 sdpvar lambda
 
 % Add the coefficient-wise equality, so f-lambda - certificate = 0
-% sum_poly = f - lambda;
 sum_poly = f - lambda;
-% prod_schm = sdpvar(numMonG,1);
-% Handle the schmudgen-like terms, so the "certificate" above
+
+% Start adding the Putinar terms
 F = [];
 svecVar = cell(lenG,1);
-% mTemp = x(1)*ones(numMonS); 
-% ind_nontriv_sos = 1;
-% ind_schm = 1;
 for i=1:lenG
     dd = floor((dmax - degree(g(i)))/2);
     monS = monolist(x,dd);
@@ -76,10 +73,10 @@ opt.verbose = 0;
 opt.dualize = 0;
 
 opt.solver='mosek';
-opt.mosek.MSK_DPAR_INTPNT_CO_TOL_REL_GAP=1E-7;
-opt.mosek.MSK_DPAR_INTPNT_CO_TOL_DFEAS=1E-7;
-opt.mosek.MSK_DPAR_INTPNT_CO_TOL_PFEAS=1E-7;
-opt.mosek.MSK_DPAR_PRESOLVE_TOL_X=1E-7;
+% opt.mosek.MSK_DPAR_INTPNT_CO_TOL_REL_GAP=1E-7;
+% opt.mosek.MSK_DPAR_INTPNT_CO_TOL_DFEAS=1E-7;
+% opt.mosek.MSK_DPAR_INTPNT_CO_TOL_PFEAS=1E-7;
+% opt.mosek.MSK_DPAR_PRESOLVE_TOL_X=1E-7;
 opt.mosek.MSK_DPAR_OPTIMIZER_MAX_TIME=1800;
 
 Yout = optimize(F,obj,opt)%

@@ -1,27 +1,40 @@
-% generalized Schmudgen certificate with coefficients in constants, dsos, sdsos or sos
-% the case of UNbounded sets
+%% Schmudgen-based certificate with coefficients in constants, dsos, sdsos or sos
+%% The case of UNbounded sets.
+%% Use Yalmip to encode polynomials.
+% Here we assume that the set is formulated as a subset of the non-negative
+% orthant; if this is not the case, we need to translate the possibly
+% negative variables into the non-negative orthant using the transformation
+% x -> y-z, y>=0, z>=0 before using the case, see the paper for more details.
 
 clear
-% Write here your case following the format of the below example
-numVars=3;
+%% Write here your case following the format of the below example
+numVars=5; % the number of variables in the problem, after the transformation to R+ mentioned above, if needed
 x = sdpvar(numVars,1);
-f = sum(x(1:numVars-1).^2)/(numVars-1) + x(end)^2; % objective function
-g = [x(end)^2 - 1; sum(x(1:numVars-1).^2)-sum(x(1:numVars-1))*x(end)-(numVars-1)]; % vector of inequality constraints, >=0 format, WITHOUT x>=0
-h=[]; % vector of equality constraints
+f = 7*(2*x(1)-x(2)+x(3)-2*x(4)-2*x(5)); % the objective function
+g = [(7*x(1)-2)^2-49*x(2)^2-(7*x(3)-1)^2-(7*x(5)-1)^2; 49*x(1)*x(3)-49*x(4)*x(5)+49*x(1)^2-1;7*x(3)-49*x(2)^2-49*x(4)^2-1;...
+    49*x(1)*x(5)-49*x(2)*x(3)-2;2-sum(x);x]; % vector of inequality constraints, >=0 format
+h = []; % vector of equality constraints, =0 format
 setType = 2; % type of coefficients: constant term (0), dsos (1), sos (2)
 r = 0; % level of the hierarchy, r from the paper
 %
 
-% % Start the contruction
+%% Start the contruction
 tic
 
-% additional degree to control for numerica issues if needed
+% additional degree to control for numerical issues if needed
 deg_aux = 0;
 
 lenG = length(g);
 Dg = zeros(lenG,1);
+vec_bounds = false(numVars,1); % true if x>=0 is in the set of constraints
 for j=1:lenG
     Dg(j) = degree(g(j));
+    [coefg,mong] = coefficients(g(j));
+    numMonGj = length(coefg);
+    if numMonGj ==1 && Dg(j)==1 && coefg(end) == 1
+        ind_bound = find(ismember(x,mong(end)));
+        vec_bounds(ind_bound,1) = true;
+    end
 end
 Df = degree(f);
 dpoly = max(max(Dg),ceil(Df/2));
@@ -35,7 +48,7 @@ denom = 1+sum(x);
 for i=1:size(beta,1)
     deg_temp = beta(i,:);
     multinom_coef = factorial(r)/prod(factorial([r-sum(beta*dmax),beta*dmax]));
-    D = D + multinom_coef*denom^(r-beta*Dg)*prod(g.^(beta')); 
+    D = D + multinom_coef*denom^(r-beta*Dg)*prod(g.^(beta'));
 end
 
 % lambda-variable
@@ -48,8 +61,8 @@ f = D*(1+sum(x))^max(0,2*dpoly-Df)*(f - lambda);
 sum_poly = f;
 
 % Add variables x to the set description to use for the certificate
-g = [g;x];
-Dg = [Dg;ones(numVars,1)];
+g = [g;x(~vec_bounds)];
+Dg = [Dg;ones(sum(~vec_bounds),1)];
 lenG = length(g);
 
 % Generate possible vectors of degrees for Schmudgen terms
@@ -159,7 +172,7 @@ for dd = 0:dcert
             % SOS constraint
             F=F+[mTemp >= 0];
         end
-
+        
     end
 end
 
@@ -191,10 +204,10 @@ opt.verbose = 0;
 opt.dualize = 0;
 if setType >= 2
     opt.solver='mosek';
-    opt.mosek.MSK_DPAR_INTPNT_CO_TOL_REL_GAP=1E-7;
-    opt.mosek.MSK_DPAR_INTPNT_CO_TOL_DFEAS=1E-7;
-    opt.mosek.MSK_DPAR_INTPNT_CO_TOL_PFEAS=1E-7;
-    opt.mosek.MSK_DPAR_PRESOLVE_TOL_X=1E-7;
+    %     opt.mosek.MSK_DPAR_INTPNT_CO_TOL_REL_GAP=1E-7;
+    %     opt.mosek.MSK_DPAR_INTPNT_CO_TOL_DFEAS=1E-7;
+    %     opt.mosek.MSK_DPAR_INTPNT_CO_TOL_PFEAS=1E-7;
+    %     opt.mosek.MSK_DPAR_PRESOLVE_TOL_X=1E-7;
     opt.mosek.MSK_DPAR_OPTIMIZER_MAX_TIME=1800;
 else
     opt.solver='gurobi';

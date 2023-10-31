@@ -1,21 +1,22 @@
-% The Lasserre hierarchy implemented in Yalmip
+%% The Lasserre hierarchy.
+%% Use Yalmip to encode polynomials.
 clear
 
 %% Write here your case following the format of the below example
-numVars=5;
+numVars=5; % the number of variables in the problem
 x = sdpvar(numVars,1);
-f = sum(x(1:numVars-1).^2)/(numVars-1) + x(end)^2; % objective function
-g = [x(end)^2 - 1; sum(x(1:numVars-1).^2)-sum(x(1:numVars-1))*x(end)-(numVars-1)]; % vector of inequality constraints, >=0 format
+f = sum(x(1:numVars-1).^2)/(numVars-1) + x(end)^2; % the objective function
+g = [x(end)^2 - 1; sum(x(1:numVars-1).^2)-sum(x(1:numVars-1))*x(end)-(numVars-1);x]; % vector of inequality constraints, >=0 format
 h=[]; % vector of equality constraints
-dmax = 4; % the maximum degree of the relaxation
+dmax = 2; % the maximum degree of the relaxation
 %%
 
-% Begin the certificate
+%% Start the contruction
+tic
+
+% add the constant term to the non-negativity constraints
 g = [1;g];
 lenG = length(g);
-
-% % Start the contruction
-tic
 
 % lambda-variable
 sdpvar lambda
@@ -23,10 +24,9 @@ sdpvar lambda
 % Add the coefficient-wise equality, so f-lambda - certificate = 0
 sum_poly = f - lambda;
 
-% Handle the schmudgen-like terms, so the "certificate" above
+% Start adding the Putinar terms
 F = [];
 svecVar = cell(lenG,1);
-
 for i=1:lenG
     dd = floor((dmax - degree(g(i)))/2);
     monS = monolist(x,dd);
@@ -65,10 +65,10 @@ opt.verbose = 0;
 opt.dualize = 0;
 
 opt.solver='mosek';
-opt.mosek.MSK_DPAR_INTPNT_CO_TOL_REL_GAP=1E-7;
-opt.mosek.MSK_DPAR_INTPNT_CO_TOL_DFEAS=1E-7;
-opt.mosek.MSK_DPAR_INTPNT_CO_TOL_PFEAS=1E-7;
-opt.mosek.MSK_DPAR_PRESOLVE_TOL_X=1E-7;
+% opt.mosek.MSK_DPAR_INTPNT_CO_TOL_REL_GAP=1E-7;
+% opt.mosek.MSK_DPAR_INTPNT_CO_TOL_DFEAS=1E-7;
+% opt.mosek.MSK_DPAR_INTPNT_CO_TOL_PFEAS=1E-7;
+% opt.mosek.MSK_DPAR_PRESOLVE_TOL_X=1E-7;
 opt.mosek.MSK_DPAR_OPTIMIZER_MAX_TIME=1800;
 
 % optimize
