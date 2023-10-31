@@ -1,24 +1,30 @@
-%% generalized Schmudgen certificate with coefficients in constants, dsos, sdsos or sos
-% Unbounded case
+%% Schmudgen-based certificate with coefficients in constants, dsos, sdsos or sos
+%% The case of UNbounded sets.
+%% Use some functions from SOSTOOLS 1.00 and DIGS to encode polynomials.
+%% Important Comments:
+% (1) This code works properly when 
+% (total degree + 1)^(number of variables -1) <= 2^64, othrewise we cannot
+% match the monomials. This restriction is not present in the Yalmip codes.
+% (2) Here we assume that the set is formulated as a subset of the non-negative
+% orthant; if this is not the case, we need to translate the possibly
+% negative variables into the non-negative orthant using the transformation
+% x -> y-z, y>=0, z>=0 before using the case, see the paper for more details.
+
 clear
 
 
 %% Write here your case following the format of the below example
-numVars=5;
+numVars=5; % the number of variables in the problem, after the transformation to R+ mentioned above, if needed
 x = varsVector('x',numVars);
-f = 7*(2*x(1)-x(2)+x(3)-2*x(4)-2*x(5));
+f = 7*(2*x(1)-x(2)+x(3)-2*x(4)-2*x(5)); % the objective function
 g = [(7*x(1)-2)^2-49*x(2)^2-(7*x(3)-1)^2-(7*x(5)-1)^2; 49*x(1)*x(3)-49*x(4)*x(5)+49*x(1)^2-1;7*x(3)-49*x(2)^2-49*x(4)^2-1;...
     49*x(1)*x(5)-49*x(2)*x(3)-2;2-sum(x);x']; % vector of inequality constraints, >=0 format
-M = 2;
-L = zeros(numVars,1);
-U = M*ones(numVars,1);
 h = []; % vector of equality constraints, =0 format
-setType = 2; % choose the type of coefficients: constant term (0), dsos (1), sdsos (2), sos (3)
+setType = 3; % choose the type of coefficients: constant term (0), dsos (1), sdsos (2), sos (3)
 r = 0; % degree of the hierarchy r in the paper
 %
 
-
-% start recording the construction time
+%% Start the contruction
 tic
 
 % additional degree to control for numerical issues if needed
@@ -156,7 +162,6 @@ for dd = 0:dcert
     monVecGTemp = monVecG(ind_used,:);
     
     % the main decision variable that corresponds to SOS, DSOS, SDSOS, or constant term
-    % svecVar{dd+1} = sdpvar(1,numMonTemp);
     svecVar{dd+1} = sdpvar(1,numWithDiag*numMonTemp);
     
     % Constraints on the coefficients
@@ -323,10 +328,10 @@ opt.verbose = 0;
 opt.dualize = 0;
 if setType >= 3
     opt.solver='mosek';
-%     opt.mosek.MSK_DPAR_INTPNT_CO_TOL_REL_GAP=1E-7;
-%     opt.mosek.MSK_DPAR_INTPNT_CO_TOL_DFEAS=1E-7;
-%     opt.mosek.MSK_DPAR_INTPNT_CO_TOL_PFEAS=1E-7;
-%     opt.mosek.MSK_DPAR_PRESOLVE_TOL_X=1E-7;
+    %     opt.mosek.MSK_DPAR_INTPNT_CO_TOL_REL_GAP=1E-7;
+    %     opt.mosek.MSK_DPAR_INTPNT_CO_TOL_DFEAS=1E-7;
+    %     opt.mosek.MSK_DPAR_INTPNT_CO_TOL_PFEAS=1E-7;
+    %     opt.mosek.MSK_DPAR_PRESOLVE_TOL_X=1E-7;
     opt.mosek.MSK_DPAR_OPTIMIZER_MAX_TIME=1800;
 else
     opt.solver='gurobi';
@@ -338,7 +343,8 @@ end
 Yout = optimize(F,obj,opt)
 
 % results
-value = double(lambda)
+lower_bound = double(lambda)
+construct_time
 sol_time = Yout.solvertime
 yalmip_time = Yout.yalmiptime
 status = Yout.problem

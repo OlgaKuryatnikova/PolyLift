@@ -1,23 +1,32 @@
-%% generalized Schmudgen certificate with coefficients in constants, dsos, sdsos or sos
-% compact case
+%% Schmudgen-based certificate with coefficients in constants, dsos, sdsos or sos
+%% The case of compact sets.
+%% Use some functions from SOSTOOLS 1.00 and DIGS to encode polynomials.
+%% Important Comments:
+% (1) This code works properly when 
+% (total degree + 1)^(number of variables -1) <= 2^64, othrewise we cannot
+% match the monomials. This restriction is not present in the Yalmip codes.
+% (2) Here we assume that the set is formulated as a subset of the non-negative
+% orthant; if this is not the case, we need to translate the possibly
+% negative variables into the non-negative orthant using the transformation
+% x -> y-z, y>=0, z>=0 before using the case, see the paper for more details.
 
 clear
 
 %% Write here your case following the format of the below example
-numVars=5;
+numVars=5; % the number of variables in the problem
 x = varsVector('x',numVars);
-f = 7*(2*x(1)-x(2)+x(3)-2*x(4)-2*x(5));
+f = 7*(2*x(1)-x(2)+x(3)-2*x(4)-2*x(5)); % the objective function
 g = [(7*x(1)-2)^2-49*x(2)^2-(7*x(3)-1)^2-(7*x(5)-1)^2; 49*x(1)*x(3)-49*x(4)*x(5)+49*x(1)^2-1;7*x(3)-49*x(2)^2-49*x(4)^2-1;...
     49*x(1)*x(5)-49*x(2)*x(3)-2;2-sum(x);x']; % vector of inequality constraints, >=0 format
 M = 2;
 L = zeros(numVars,1);
 U = M*ones(numVars,1);
 h = []; % vector of equality constraints, =0 format
-setType = 2; % choose the type of coefficients: constant term (0), dsos (1), sdsos (2), sos (3)
+setType = 3; % choose the type of coefficients: constant term (0), dsos (1), sdsos (2), sos (3)
 dmax = 4; % degree of the hierarchy in the paper
 %
 
-% start recording the construction time
+%% Start the contruction
 tic
 
 if setType == 0
