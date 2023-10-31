@@ -36,7 +36,7 @@ sdpvar lambda
 sum_poly = f - lambda;
 
 % Generate possible vectors of degrees for Schmudgen terms
-monVecG = indexCreationLess_sym(lenG,dmax);
+monVecG = indexCreationLess(lenG,dmax);
 indTotal = monVecG*Dg;
 % option 1
 indBelowDmax = indTotal <= dmax; 
